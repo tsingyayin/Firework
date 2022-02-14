@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/IRC">
+        <file>Icon/DefaultProject.png</file>
+        <file>Icon/EmptyProject.png</file>
+        <file>Icon/ArrowD.png</file>
+        <file>Icon/LoadingPage.png</file>
+        <file>Icon/BFButton.png</file>
+        <file>Icon/NFButton.png</file>
+        <file>Icon/PlayButton.png</file>
+        <file>Icon/StopButton.png</file>
+        <file>Icon/EditMode.png</file>
+        <file>Icon/PlayMode.png</file>
+    </qresource>
+</RCC>
