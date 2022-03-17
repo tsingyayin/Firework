@@ -322,6 +322,10 @@ namespace CE {
 			ScaleMark->move((Value - Minimum) / (float)(Maximum - Minimum) * width() * 0.98 + width() * 0.01 - 5, height() * 0.01);
 			//qDebug() << Value;
 		}
+		void setValueWithSignal(qint64 value) {
+			setValue(value);
+			emit valueChanged(value);
+		}
 		qint64 value() {
 			return Value;
 		}

@@ -10,5 +10,11 @@
         <file>Icon/StopButton.png</file>
         <file>Icon/EditMode.png</file>
         <file>Icon/PlayMode.png</file>
+        <file>Icon/FrameTool.png</file>
+        <file>Icon/RootTool.png</file>
+        <file>Icon/FrameCursor.png</file>
+        <file>Icon/RootCursor.png</file>
+        <file>Icon/DeleteProject.png</file>
+        <file>Icon/OpenProject.png</file>
     </qresource>
 </RCC>

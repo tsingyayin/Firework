@@ -7,6 +7,80 @@
 #include "../loadsettings.h"
 #include "CEWidgets.h"
 #pragma execution_character_set("utf-8")
+class EnsureDelete :public QWidget
+{
+	Q_OBJECT
+signals:
+	void isClosed();
+public:
+	QFrame* CentralWidget;
+	QLabel* NoticeLabel;
+	QPushButton* YesButton;
+	QPushButton* NoButton;
+	QGridLayout* CurrentLayout;
+	QString ProjectName;
+	EnsureDelete(QString ProName, QWidget* parent = Q_NULLPTR) {
+		ProjectName = ProName;
+		this->setFixedSize(600, 200);
+		this->setParent(parent);
+		this->setWindowFlag(Qt::FramelessWindowHint);
+		this->setAttribute(Qt::WA_TranslucentBackground);
+		this->setStyleSheet("QWidget{color:#FFFFFF;font-family:'Microsoft YaHei'};");
+		CentralWidget = new QFrame(this);
+		CentralWidget->setStyleSheet("QFrame{background-color:#444444;border:3px solid #555555;border-radius:10px;}");
+		CentralWidget->setFixedSize(600, 300);
+		NoticeLabel = new QLabel(this);
+		NoticeLabel->setText("您可以手动删除项目，因为使用Firework内置删除项目将导致项目不可恢复。\n您确定要使用程序内置的删除么？\n该 操 作 不 可 撤 销。");
+		NoticeLabel->setWordWrap(TRUE);
+		YesButton = new QPushButton(this);
+		NoButton = new QPushButton(this);
+		YesButton->setFixedHeight(30);
+		NoButton->setFixedHeight(30);
+		connect(YesButton, SIGNAL(clicked()), this, SLOT(isYes()));
+		connect(NoButton, SIGNAL(clicked()), this, SLOT(isNo()));
+		YesButton->setText("确定");
+		NoButton->setText("取消");
+		CurrentLayout = new QGridLayout(this);
+		CurrentLayout->addWidget(NoticeLabel, 0, 0, 1, 5);
+		CurrentLayout->addWidget(NoButton, 1, 1, 1, 1);
+		CurrentLayout->addWidget(YesButton, 1, 3, 1, 1);
+		this->setLayout(CurrentLayout);
+		YesButton->setStyleSheet("\
+				QPushButton\
+					{border:2px solid #1473E6;border-radius:10px;background-color:#555555;}\
+				QPushButton:hover\
+					{border:2px solid #1473E6;border-radius:10px;background-color:rgba(0,0,0,0);}\
+				QPushButton:pressed\
+					{border:2px solid #1473E6;border-radius:10px;background-color:#333333;}");
+		NoButton->setStyleSheet("\
+				QPushButton\
+					{border:2px solid #D61921;border-radius:10px;background-color:#555555;}\
+				QPushButton:hover\
+					{border:2px solid #D61921;border-radius:10px;background-color:rgba(0,0,0,0);}\
+				QPushButton:pressed\
+					{border:2px solid #D61921;border-radius:10px;background-color:#333333;}");
+	}
+public slots:
+
+	void isYes() {
+		NoticeLabel->setText("程序正在删除项目...\n请等待...");
+		NoticeLabel->repaint();
+		QDir ProjectDir;
+		ProjectDir.setPath("./Users_Data/repos/" + ProjectName);
+		ProjectDir.removeRecursively();
+		emit isClosed();
+		this->close();
+	}
+	void isNo() {
+
+		this->close();
+	}
+	void closeEvent(QCloseEvent* event) {
+		this->hide();
+		this->disconnect();
+		this->deleteLater();
+	}
+};
 
 class uNewProjectWidget :public QFrame
 {
@@ -80,11 +154,19 @@ public:
 		spawnList();
 		resizeEvent();
 	}
+public slots:
 	void spawnList() {
 		QDir reposDir;
 		reposDir.setPath("./Users_Data/repos/");
 		reposDir.setFilter(QDir::Dirs);
 		QFileInfoList ProjectList = reposDir.entryInfoList(QDir::Dirs,QDir::SortFlag::Time);
+		if (!ButtonGroup->isEmpty()) {
+			for (int i = 0; i < ButtonGroup->length(); i++) {
+				ButtonGroup->button(i)->hide();
+				ButtonGroup->button(i)->deleteLater();
+			}
+		}
+		ButtonGroup->clear();
 		for (int i = 0; i < ProjectList.length(); i++) {
 			if (ProjectList[i].fileName() == "." || ProjectList[i].fileName() == "..") { continue; }
 			CE::CEMultiButton* ProButton = new CE::CEMultiButton(CE::TILayout::HIT, CentralWidget, TRUE);
@@ -112,6 +194,7 @@ public:
 		}
 		ScrollBar->setMinimum(0);
 		ScrollBar->setSingleStep(1);
+		resizeEvent();
 	}
 	void resizeEvent(QResizeEvent* event = Q_NULLPTR) {
 		
@@ -149,9 +232,10 @@ public:
 			ButtonGroup->button(i)->setGeometry(QRect(width() * 0.01, height() * 0.01 + height() * 0.15 * i, width() * 0.97, height() * 0.145));
 		}
 	}
-public slots:
 	void wheelEvent(QWheelEvent* event) {
-		ScrollBar->setValue(ScrollBar->value() - (int)(event->angleDelta().y() / 120));
+		if (ButtonGroup->length() > 6) {
+			ScrollBar->setValue(ScrollBar->value() - (int)(event->angleDelta().y() / 120));
+		}	
 	}
 	void moveCentralWidget(int value) {
 		CentralWidget->setGeometry(QRect(0, - height() * 0.15 * value, width() * 0.98, height() * 0.15 * ButtonGroup->length()));
@@ -161,6 +245,8 @@ public slots:
 class uTLDRWidget :public QFrame
 {
 	Q_OBJECT
+signals:
+	void needRefresh();
 public:
 	QLabel* ProjectName;
 	QLabel* ProjectCover;
@@ -169,6 +255,8 @@ public:
 	QLabel* ProjectSource;
 	QLabel* ProjectStep;
 	QLabel* ProjectSize;
+	QPushButton* DeleteButton;
+	QString CurrentProject;
 	uTLDRWidget(QWidget* parent = Q_NULLPTR) {
 		this->setParent(parent);
 
@@ -179,16 +267,23 @@ public:
 		ProjectSource = new QLabel(this);
 		ProjectStep = new QLabel(this);
 		ProjectSize = new QLabel(this);
+		DeleteButton = new QPushButton(this);
+		connect(DeleteButton, SIGNAL(clicked()), this, SLOT(ensureDeleteButton()));
+		connect(this, SIGNAL(needRefresh()), this, SLOT(initText()));
+		initText();
+	}
+public slots:
+	void initText() {
 		ProjectName->setText("项目名称：");
 		ProjectCover->setText("选择项目以获取预览");
 		ProjectCover->setAlignment(Qt::AlignCenter);
 		ProjectTime->setText("修改日期：");
 		ProjectCache->setText("缓存管理：");
 		ProjectSource->setText("分析源：");
-		//ProjectStep->setText("最高步骤：");
 		ProjectSize->setText("项目大小：");
 		ProjectCover->setStyleSheet("QLabel{border:1px solid white;border-radius:5px;background-color:#000000}");
-
+		DeleteButton->setText("删除此项目");
+		DeleteButton->hide();
 		resizeEvent();
 	}
 	void resizeEvent(QResizeEvent* event = Q_NULLPTR) {
@@ -202,10 +297,19 @@ public:
 		ProjectSource->setGeometry(QRect(width() * 0.3, height() * 0.55, width() * 0.35, height() * 0.2));
 		ProjectCache->setGeometry(QRect(width() * 0.3, height() * 0.75, width() * 0.35, height() * 0.2));
 		ProjectStep->setGeometry(QRect(width() * 0.7, height() * 0.35, width() * 0.2, height() * 0.2));
-		ProjectSize->setGeometry(QRect(width() * 0.7, height() * 0.55, width() * 0.2, height() * 0.2));
+		ProjectSize->setGeometry(QRect(width() * 0.7, height() * 0.35, width() * 0.2, height() * 0.2));
+
+		DeleteButton->setGeometry(QRect(width() * 0.7, height() * 0.60, width() * 0.2, height() * 0.28));
+		DeleteButton->setStyleSheet("\
+				QPushButton\
+					{font-family:'Microsoft YaHei';border:2px solid #D61921;border-radius:10px;background-color:#444444;font-size:" + QString::number((int)(height() * 0.15)) + "px;color:#FFFFFF;}\
+				QPushButton:hover\
+					{font-family:'Microsoft YaHei';border:2px solid #D61921;border-radius:10px;background-color:#554444;font-size:" + QString::number((int)(height() * 0.15)) + "px;color:#FFFFFF;}\
+				QPushButton:pressed\
+					{font-family:'Microsoft YaHei';border:2px solid #D61921;border-radius:10px;background-color:#553333;font-size:" + QString::number((int)(height() * 0.15)) + "px;color:#FFFFFF;}");
 	}
-public slots:
 	void loadInfo(QString projectName) {
+		CurrentProject = projectName;
 		QMap<QString, QString> SettingsList;
 		SettingsList["ProjectEdition"] = "";
 		SettingsList["ProjectSource"] = "";
@@ -264,6 +368,7 @@ public slots:
 		else {
 			setDestoryInfo();
 		}
+		DeleteButton->show();
 	}
 	void setDestoryInfo() {
 		ProjectName->setText("项目CES设置文件不正确，该项目无效");
@@ -289,6 +394,12 @@ public slots:
 			size += sizeOf(path + QDir::separator() + subDir);
 		return size;
 	}
+	void ensureDeleteButton() {
+		EnsureDelete* EnsureDeletePage = new EnsureDelete(CurrentProject);
+		connect(EnsureDeletePage, SIGNAL(isClosed()), this, SIGNAL(needRefresh()));
+		EnsureDeletePage->setWindowModality(Qt::ApplicationModal);
+		EnsureDeletePage->show();
+	}
 };
 
 class uFirstPage :public QWidget
@@ -300,7 +411,6 @@ private:
 	uOpenProjectWidget* OpenArea;
 	uTLDRWidget* TLDRArea;
 public:
-
 	uFirstPage(QWidget* parent = Q_NULLPTR) {
 		if (Program_Settings("Window_SizePolicy") == "F") {
 			setWindowState(Qt::WindowMaximized);
@@ -320,10 +430,10 @@ public:
 		TLDRArea = new uTLDRWidget(this);
 		connect(OpenArea->ButtonGroup, SIGNAL(selected(QString)), this, SLOT(getSelectProject(QString)));
 		connect(OpenArea->ButtonGroup, SIGNAL(refreshed()), this, SLOT(getProjectName()));
+		connect(TLDRArea, SIGNAL(needRefresh()), OpenArea, SLOT(spawnList()));
 		resizeEvent();
 		
-	}
-	
+	}	
 	void resizeEvent(QResizeEvent* event = Q_NULLPTR) {
 		WelcomeLabel->setStyleSheet("QLabel{background-color:#333333;color:#FFFFFF;font-size:" + QString::number((int)(height() * 0.05)) + "px;font-family:'Microsoft YaHei'}");
 		WelcomeLabel->setGeometry(QRect(width() * 0.0, height() * 0.0, width() * 1.0, height() * 0.1));

@@ -2,6 +2,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <QtWidgets>
+#include "../global_value.h"
 #pragma execution_character_set("utf-8")
 
 class SelectVideos :public QWidget
@@ -45,7 +46,7 @@ public:
 		LoadButton->setText("预览文件");
 		DeleteButton->setText("删除该行");
 		this->setWindowTitle("项目资源链接编辑器");
-		TitleLabel->setText("  查看当前资源");
+		TitleLabel->setText("  编辑");
 		refreshList();
 		this->setMinimumSize(800, 450);
 		resizeEvent();
@@ -66,9 +67,9 @@ public slots:
 				QPushButton:pressed\
 					{border:2px solid #777777;border-radius:10px;background-color:#333333;}\
 			QTextEdit\
-					{border:2px solid #777777;border-radius:10px;background-color:#555555;;font-size:" + QString::number((int)(height() * 0.03)) + "px}\
+					{border:2px solid #777777;border-radius:10px;background-color:#555555;;font-size:" + QString::number((int)(height() * 0.03)) + "px;font-family:'Microsoft YaHei'}\
 			QLabel\
-					{background-color:#222222;font-size:" + QString::number((int)(height() * 0.08)) + "px}\
+					{background-color:#222222;font-size:" + QString::number((int)(height() * 0.05)) + "px}\
 			");
 		TitleLabel->setGeometry(QRect(width() * 0, height() * 0, width() * 1, height() * 0.1));
 		FileList->setGeometry(QRect(width() * 0.02, height() * 0.11, width() * 0.8, height() * 0.86));
@@ -85,6 +86,9 @@ public slots:
 	bool addNewFile() {
 		QString NewFile = QFileDialog::getOpenFileName(this, "新增资源文件", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "MP4 Files(*.mp4)");
 		if (NewFile != "") {
+			if (NewFile.replace("\\", "/").contains(QDir::currentPath().replace("\\", "/") + "/Users_Data/repos/" + GlobalValue::CurrentProject + "/resource")) {
+				NewFile = "__PROJECT_LOCAL_RESOURCE__/" + NewFile.replace("\\", "/").section("/", -1, -1);
+			}
 			QStringList List = CurrentList.split("||");
 			for (int i = 0; i < List.length(); i++) {
 				if (List[i].replace("\\", "/") == NewFile.replace("\\", "/")) {
@@ -116,7 +120,7 @@ public slots:
 	void deleteLine() {
 		QString List = FileList->toPlainText();
 		QTextCursor Cursor = FileList->textCursor();
-		int CurrentPosition = Cursor.position();
+		int CurrentPosition = Cursor.position() - 1;
 		int Count = 0;
 		int Next = List.length();
 		while (TRUE) {
@@ -143,7 +147,7 @@ public slots:
 		QStringList List = CurrentList.split("||");
 		for (int i = 0; i < List.length(); i++) {
 			QFile CheckFile;
-			CheckFile.setFileName(List[i]);
+			CheckFile.setFileName(List[i].replace("\\", "/").replace("__PROJECT_LOCAL_RESOURCE__", QDir::currentPath().replace("\\", "/") + "/Users_Data/repos/" + GlobalValue::CurrentProject + "/resource"));
 			if (!CheckFile.exists()) {
 				if (List[i] == "") {
 					QMessageBox msgBox;

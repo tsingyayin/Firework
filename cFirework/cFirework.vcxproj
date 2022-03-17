@@ -108,9 +108,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Func\FrameDelay.h" />
+    <ClInclude Include="UI\CEInfoPage.h" />
+    <QtMoc Include="UI\ConfirmPage.h" />
     <QtMoc Include="UI\SelectVideos.h" />
     <QtMoc Include="Func\ProjectCES.h" />
     <QtMoc Include="global_value.h" />
+    <QtMoc Include="Func\ImageAna.h" />
     <ClInclude Include="langcontrol.h" />
     <ClInclude Include="loadsettings.h" />
     <ClInclude Include="resource.h" />
@@ -118,8 +121,7 @@
     <QtMoc Include="UI\NewProjectPage.h" />
     <QtMoc Include="UI\CEWidgets.h" />
     <QtMoc Include="UI\FirstPage.h" />
-    <QtMoc Include="UI\Widget.h" />
-    <QtMoc Include="Func\keyFunction.h" />
+    <ClInclude Include="Func\keyFunction.h" />
     <QtMoc Include="UI\MainWindow.h" />
   </ItemGroup>
   <ItemGroup>

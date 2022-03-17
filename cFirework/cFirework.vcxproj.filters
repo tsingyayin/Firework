@@ -49,14 +49,14 @@
     <ClInclude Include="loadsettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Func\keyFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\CEInfoPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="Func\keyFunction.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="UI\Widget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="UI\MainWindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -79,6 +79,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="global_value.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="UI\ConfirmPage.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Func\ImageAna.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
