@@ -79,11 +79,11 @@ public:
 		
 		
 
-		QFile CSVFile;
+		/*QFile CSVFile;
 		CSVFile.setFileName("./OutputData.csv");
 		CSVFile.open(QIODevice::ReadWrite | QIODevice::Text);
 		CSVFile.write(CSVString.toStdString().c_str());
-		CSVFile.close();
+		CSVFile.close();*/
 		return TRUE;
 	}
 	static bool flattenImage(QString ImageDir) {
@@ -211,6 +211,7 @@ public:
 		}
 	}
 };
+
 class FlattenSingleImage :public QThread
 {
 	Q_OBJECT

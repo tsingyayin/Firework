@@ -7,12 +7,12 @@
 #include "SelectVideos.h"
 #include "ConfirmPage.h"
 #include "../Func/FrameDelay.h"
-#include "../Func/keyFunction.h"
 #include "CEWidgets.h"
 #include "../Func/ProjectCES.h"
 #include "../global_value.h"
 #include "../loadsettings.h"
 #include "CEInfoPage.h"
+#include "ThreadSettings.h"
 
 #pragma execution_character_set("utf-8")
 
@@ -354,8 +354,6 @@ public slots:
 		PlayList->setPlaybackMode(QMediaPlaylist::Loop); 
 		PlayList->setCurrentIndex(0);
 		GlobalValue::CurrentDuration = -1;
-		qDebug() << VideoWidget->frameSize();
-		qDebug() << VideoWidget->size();
 		//MediaPlayer->play();
 	}
 	void resizeEvent(QResizeEvent* event = Q_NULLPTR) {
@@ -563,36 +561,65 @@ public:
 					color:#FFFFFF;\
 					font-family:'Microsoft YaHei';\
 					background-color:#222222;\
-					border-radius:0px solid #000000;\
-				}\
-				QTextBrowser:QScrollBar:vertical{\
+					border:3px solid #222222;\
+				}");
+		KernalInfoBrowser->verticalScrollBar()->setStyleSheet("\
+				QScrollBar:vertical{\
                     background-color:#2C2C2C;\
                     margin:0px,0px,0px,0px;\
                     padding-top:0px;\
                     padding-bottom:0px;\
                 }\
-                QTextBrowser:QScrollBar::handle:vertical{\
+                QScrollBar::handle:vertical{\
                     background-color:rgba(255,255,255,1);\
-                    border-radius:" + QString::number((int)(width() * 0.025)) + "px;\
+                    border-radius:" + QString::number((int)(width() * 0.06)) + "px;\
                 }\
-                QTextBrowser:QScrollBar::handle:vertical:hover{\
+                QScrollBar::handle:vertical:hover{\
                     background-color:rgba(200,200,200,1);\
-                    border-radius:" + QString::number((int)(width() * 0.025)) + "px;\
+                    border-radius:" + QString::number((int)(width() * 0.06)) + "px;\
                 }\
-                QTextBrowser:QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical{\
+                QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical{\
                     background-color:rgba(0,0,0,0);\
                 }\
-                QTextBrowser:QScrollBar::add-line:vertical{\
+                QScrollBar::add-line:vertical{\
                     height:0px;\
                     width:0px;\
                     subcontrol-position:bottom;\
                 }\
-                QTextBrowser:QScrollBar::sub-line:vertical{\
+                QScrollBar::sub-line:vertical{\
                     height:0px;\
                     width:0px;\
                     subcontrol-position:top;\
                     }");
-		this->setStyleSheet("QFrame{border-radius:2px solid #AAAAAA;}");
+		KernalInfoBrowser->horizontalScrollBar()->setStyleSheet("\
+				QScrollBar:horizontal{\
+                    background-color:#2C2C2C;\
+                    margin:0px,0px,0px,0px;\
+                    padding-top:0px;\
+                    padding-bottom:0px;\
+                }\
+                QScrollBar::handle:horizontal\
+                    background-color:rgba(255,255,255,1);\
+                    border-radius:" + QString::number((int)(width() * 0.06)) + "px;\
+                }\
+                QScrollBar::handle:horizontal:hover{\
+                    background-color:rgba(200,200,200,1);\
+                    border-radius:" + QString::number((int)(width() * 0.06)) + "px;\
+                }\
+                QScrollBar::add-page:horizontal,QScrollBar::sub-page:horizontal{\
+                    background-color:rgba(0,0,0,0);\
+                }\
+                QScrollBar::add-line:horizontal{\
+                    height:0px;\
+                    width:0px;\
+                    subcontrol-position:bottom;\
+                }\
+                QScrollBar::sub-line:horizontal{\
+                    height:0px;\
+                    width:0px;\
+                    subcontrol-position:top;\
+                    }");
+		//this->setStyleSheet("QFrame{border-radius:2px solid #AAAAAA;}");
 		KernalInfoBrowser->setGeometry(QRect(0, 0, width(), height()));
 	}
 public slots:
@@ -841,7 +868,7 @@ public:
 	QMenu* File;
 	QAction* OpenFile, * SaveFile, * CloseProgram;
 	QMenu* Project;
-	QAction* ClearCache, * ClearOutput, * ChangeThread, * Local;
+	QAction* ClearCache, * ClearOutput, * ClearAll,* ChangeThread, * Local;
 	QMenu* Help;
 	QAction* About, * Document;
 	MainWindow(QWidget* parent = Q_NULLPTR) {
@@ -869,13 +896,15 @@ public:
 		File->addAction(CloseProgram);
 
 		Project = new QMenu("项目", this);
-		ClearCache = new QAction("清理缓存", this);
+		ClearCache = new QAction("清理缓存并关闭项目", this);
 		ClearOutput = new QAction("清理生成结果", this);
+		ClearAll = new QAction("清理全部内容并关闭项目", this);
 		ChangeThread = new QAction("更改多线程选项", this);
 		Local = new QAction("项目本地化", this);
 
 		Project->addAction(ClearCache);
 		Project->addAction(ClearOutput);
+		Project->addAction(ClearAll);
 		Project->addSeparator();
 		Project->addAction(ChangeThread);
 		Project->addSeparator();
@@ -899,7 +928,10 @@ public:
 		connect(About, SIGNAL(triggered()), this, SLOT(openAboutPage()));
 		connect(ClearOutput, SIGNAL(triggered()), this, SLOT(clearOutputFolder()));
 		connect(ClearCache, SIGNAL(triggered()), this, SLOT(clearCacheFolder()));
+		connect(ClearAll, SIGNAL(triggered()), this, SLOT(clearAllFolder()));
+		connect(ChangeThread, SIGNAL(triggered()), this, SLOT(changeThread()));
 		connect(Local, SIGNAL(triggered()), this, SLOT(localProject()));
+		connect(Document, SIGNAL(triggered()), this, SLOT(openHelp()));
 		this->setStyleSheet("\
 			QWidget{font-size:17px}\
 			QMenuBar{background-color:#272727;color:#FFFFFF;font-family:'Microsoft YaHei'}\
@@ -908,11 +940,50 @@ public:
 			QMenu::item::selected{background-color:#444444;color:#FFFFFF;font-family:'Microsoft YaHei'}");
 	}
 public slots:
+	void openHelp() {
+		system((QDir::currentPath()+"/Users_Data/dev/help.pdf").toLocal8Bit());
+	}
+	void changeThread() {
+		ThreadSettingsPage* newPage = new ThreadSettingsPage();
+		connect(newPage, SIGNAL(isClosed()), this, SLOT(saveThreadChange()));
+		newPage->show();
+	}
+	void saveThreadChange() {
+		CentralWidget->Settings->setValue("ProjectThread", QString::number(GlobalValue::MaxAliveThread));
+	}
+	void clearAllFolder() {
+		clearOutputFolder();
+		clearCacheFolder();
+	}
 	void clearOutputFolder() {
+		CentralWidget->InfoArea->addInfo("正在清除输出文件夹");
+		CentralWidget->InfoArea->repaint();
+		CentralWidget->InfoArea->addInfo("清理期间，程序会停止响应");
+		CentralWidget->InfoArea->repaint();
+		QDir output;
+		output.setPath("./Users_Data/repos/" + GlobalValue::CurrentProject + "/output");
+		output.removeRecursively();
+		output.setPath("./Users_Data/repos/" + GlobalValue::CurrentProject );
+		output.mkdir("output");
 		CentralWidget->InfoArea->addInfo("已经清理当前项目的输出文件夹");
 	}
 	void clearCacheFolder() {
+		CentralWidget->InfoArea->addInfo("正在清除缓存文件夹");
+		CentralWidget->InfoArea->repaint();
+		CentralWidget->InfoArea->addInfo("清理期间，程序会停止响应");
+		CentralWidget->InfoArea->repaint();
+		QDir output;
+		output.setPath("./Users_Data/repos/" + GlobalValue::CurrentProject + "/frame");
+		output.removeRecursively();
+		output.setPath("./Users_Data/repos/" + GlobalValue::CurrentProject + "/cache");
+		output.removeRecursively();
+		output.setPath("./Users_Data/repos/" + GlobalValue::CurrentProject);
+		output.mkdir("frame");
+		output.mkdir("cache");
 		CentralWidget->InfoArea->addInfo("已经清理当前项目的缓存文件夹");
+		CentralWidget->InfoArea->repaint();
+		Sleep(1000);
+		CentralWidget->backToManager();
 	}
 	void localProject() {
 		CentralWidget->InfoArea->addInfo("正在执行项目本地化");

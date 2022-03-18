@@ -4,7 +4,6 @@
 #include <QtCore>
 #include <QtGui>
 #include <QtWidgets>
-#include "Func/keyFunction.h"
 #include "Func/FrameDelay.h"
 #include "UI/MainWindow.h"
 #include "UI/FirstPage.h"

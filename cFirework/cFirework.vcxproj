@@ -109,6 +109,7 @@
   <ItemGroup>
     <ClInclude Include="Func\FrameDelay.h" />
     <ClInclude Include="UI\CEInfoPage.h" />
+    <QtMoc Include="UI\ThreadSettings.h" />
     <QtMoc Include="UI\ConfirmPage.h" />
     <QtMoc Include="UI\SelectVideos.h" />
     <QtMoc Include="Func\ProjectCES.h" />
@@ -121,7 +122,6 @@
     <QtMoc Include="UI\NewProjectPage.h" />
     <QtMoc Include="UI\CEWidgets.h" />
     <QtMoc Include="UI\FirstPage.h" />
-    <ClInclude Include="Func\keyFunction.h" />
     <QtMoc Include="UI\MainWindow.h" />
   </ItemGroup>
   <ItemGroup>
